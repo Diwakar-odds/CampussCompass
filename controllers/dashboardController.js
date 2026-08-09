@@ -12,17 +12,40 @@ const ROADMAP_FILES = {
   'Cloud Engineer': 'cloud-engineer.json'
 };
 
-// Helper function to read roadmap JSON data
-const getRoadmapData = (careerGoal) => {
+// In-memory cache for roadmap JSON files to avoid disk I/O on every request
+const roadmapCache = {};
+
+// Pre-load all roadmaps into memory at startup
+const initializeRoadmapCache = async () => {
+  for (const [careerGoal, filename] of Object.entries(ROADMAP_FILES)) {
+    try {
+      const filePath = path.join(__dirname, '../data/roadmaps', filename);
+      const rawData = await fs.promises.readFile(filePath, 'utf8');
+      roadmapCache[careerGoal] = JSON.parse(rawData);
+    } catch (error) {
+      console.error(`Error pre-loading roadmap for ${careerGoal}:`, error);
+    }
+  }
+};
+
+// Initialize cache
+initializeRoadmapCache();
+
+// Helper function to read roadmap JSON data (returns from cache or fallback)
+const getRoadmapData = async (careerGoal) => {
+  if (roadmapCache[careerGoal]) {
+    return roadmapCache[careerGoal];
+  }
+  
   const filename = ROADMAP_FILES[careerGoal];
   if (!filename) return null;
 
   try {
     const filePath = path.join(__dirname, '../data/roadmaps', filename);
-    if (fs.existsSync(filePath)) {
-      const rawData = fs.readFileSync(filePath, 'utf8');
-      return JSON.parse(rawData);
-    }
+    const rawData = await fs.promises.readFile(filePath, 'utf8');
+    const parsedData = JSON.parse(rawData);
+    roadmapCache[careerGoal] = parsedData;
+    return parsedData;
   } catch (error) {
     console.error(`Error loading roadmap for ${careerGoal}:`, error);
   }
@@ -79,7 +102,7 @@ exports.getDashboard = async (req, res) => {
     const user = req.user;
     
     // Load the matching roadmap
-    const roadmap = getRoadmapData(user.profile.careerGoal);
+    const roadmap = await getRoadmapData(user.profile.careerGoal);
     
     // Calculate progress
     const progress = calculateProgress(user.profile.skills, roadmap);
