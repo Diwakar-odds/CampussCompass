@@ -1,0 +1,84 @@
+name: Auto Request Review
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  request-review:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Request Reviewers
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pull_number = context.payload.pull_request.number;
+
+            // Replace with your GitHub username(s)
+            const reviewers = [
+              "arpit2006"
+            ];
+
+            const author = context.payload.pull_request.user.login;
+
+            // Remove PR author from reviewers
+            const filtered = reviewers.filter(
+              reviewer => reviewer.toLowerCase() !== author.toLowerCase()
+            );
+
+            console.log(`Repository: ${owner}/${repo}`);
+            console.log(`PR Number: ${pull_number}`);
+            console.log(`Author: ${author}`);
+            console.log(`Requested Reviewers: ${filtered.join(", ")}`);
+
+            if (filtered.length === 0) {
+              console.log("No reviewers to request.");
+              return;
+            }
+
+            // Debug information
+            const pr = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number
+            });
+
+            console.log("Head Repository:", pr.data.head.repo.full_name);
+            console.log("Base Repository:", pr.data.base.repo.full_name);
+            console.log("Is Fork:", pr.data.head.repo.fork);
+
+            try {
+              await github.rest.pulls.requestReviewers({
+                owner,
+                repo,
+                pull_number,
+                reviewers: filtered
+              });
+
+              console.log("✅ Review request sent successfully.");
+
+            } catch (error) {
+
+              console.log("❌ Failed to request review");
+              console.log("Status:", error.status);
+              console.log("Message:", error.message);
+
+              if (error.response) {
+                console.log(
+                  JSON.stringify(error.response.data, null, 2)
+                );
+              }
+
+              throw error;
+            }

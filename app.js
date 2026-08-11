@@ -75,7 +75,7 @@ app.use((req, res, next) => {
   if (!req.session.csrfToken) {
     req.session.csrfToken = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
   }
-  
+
   // Expose to templates
   res.locals.csrfToken = req.session.csrfToken;
 
@@ -109,15 +109,16 @@ app.use('/', authRoutes);
 app.use('/profile', profileRoutes);
 
 // 404 Error Handler for undefined routes
-app.use((req, res, next) => {
+app.use((req, res, _next) => {
   res.status(404).render('landing', {
     title: '404 - Page Not Found',
     error: 'The page you are looking for does not exist.'
   });
 });
 
-// Start the Express Server (only if not running on Vercel serverless)
-if (!process.env.VERCEL) {
+// Start the Express Server only when this file is run directly.
+// Tests and serverless deployments import the app without binding a port.
+if (require.main === module && !process.env.VERCEL) {
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => {
     console.log(`Server is running in ${process.env.NODE_ENV || 'development'} mode on http://localhost:${PORT}`);

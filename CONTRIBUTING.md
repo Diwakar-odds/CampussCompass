@@ -37,36 +37,58 @@ Make sure you have:
 
 ## Installation
 
-### 1. Fork the repository
-
-Click the **Fork** button on GitHub.
-
-### 2. Clone your fork
+### Linux/macOS
 
 ```bash
-git clone https://github.com/YOUR-GITHUB-USERNAME/CampussCompass.git
-cd CampussCompass
-```
+git clone <repository-url>
+cd <repository-name>
 
-### 3. Install dependencies
-
-```bash
-npm install
-```
-
-### 4. Create environment variables
-
-```bash
 cp .env.example .env
-```
 
-### 5. Start the development server
-
-```bash
+npm install
 npm run dev
 ```
 
----
+### Windows (PowerShell)
+
+```powershell
+git clone <repository-url>
+cd <repository-name>
+
+Copy-Item .env.example .env
+
+npm install
+npm run dev
+```
+
+Alternatively, Command Prompt users can run:
+
+```cmd
+copy .env.example .env
+```
+
+### PowerShell Execution Policy
+
+Some Windows users may encounter an error similar to:
+
+```text
+UnauthorizedAccess
+running scripts is disabled on this system
+```
+
+To allow npm scripts, run:
+
+```powershell
+Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+```
+
+If you prefer not to modify the execution policy, you can start the application directly with:
+
+```bash
+node app.js
+```
+
+
 
 # 📂 Project Structure
 
@@ -78,6 +100,9 @@ CampussCompass/
 ├── controllers/   # Business logic
 ├── data/          # Roadmaps and datasets
 ├── docs/          # Project documentation
+│   ├── architecture.md          # System design, data flow, and DB schema
+│   ├── api-routes.md            # Reference for every HTTP route, its auth rules, and redirects
+│   └── issue-creation-guide.md  # Guide on how to create high-quality issues
 ├── models/        # Database models
 ├── public/        # Static assets
 ├── routes/        # Application routes
@@ -135,6 +160,7 @@ To avoid duplicate work:
 ### 1. Find or Create an Issue
 
 * Browse open issues.
+* **Want to create an issue?** Please read our [Issue Creation Guide](docs/issue-creation-guide.md) first.
 * Ask to be assigned.
 * Wait for approval.
 

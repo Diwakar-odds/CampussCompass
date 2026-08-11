@@ -9,16 +9,16 @@ class User extends Model {
   }
 
   // --- Static Mongoose-like Wrapper Methods for Backwards Compatibility ---
-  
+
   // Mimic User.findOne({ email })
   static async findOne(query) {
     if (!query) return null;
-    
+
     // If it's already a standard Sequelize options object
     if (query.where) {
       return await super.findOne(query);
     }
-    
+
     // Fallback: it's a legacy simple query object (e.g., { email })
     return await super.findOne({ where: query });
   }
@@ -40,33 +40,33 @@ User.init(
     _id: {
       type: DataTypes.STRING,
       primaryKey: true,
-      defaultValue: () => Date.now().toString(),
+      defaultValue: () => Date.now().toString()
     },
     email: {
       type: DataTypes.STRING,
       allowNull: false,
       unique: true,
       validate: {
-        isEmail: true,
-      },
+        isEmail: true
+      }
     },
     password: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: false
     },
     isProfileComplete: {
       type: DataTypes.BOOLEAN,
-      defaultValue: false,
+      defaultValue: false
     },
     profile: {
       type: DataTypes.JSON,
       defaultValue: {},
       get() {
         const rawValue = this.getDataValue('profile');
-        const val = rawValue 
-          ? (typeof rawValue === 'string' ? JSON.parse(rawValue) : rawValue) 
+        const val = rawValue
+          ? (typeof rawValue === 'string' ? JSON.parse(rawValue) : rawValue)
           : {};
-        
+
         // Ensure default properties exist to prevent EJS rendering crashes
         return {
           fullName: val.fullName || '',
@@ -82,8 +82,8 @@ User.init(
           leetcodeUsername: val.leetcodeUsername || '',
           ...val
         };
-      },
-    },
+      }
+    }
   },
   {
     sequelize,
@@ -98,8 +98,8 @@ User.init(
         }
         // Force mark JSON profile field as changed so nested properties are persisted
         user.changed('profile', true);
-      },
-    },
+      }
+    }
   }
 );
 

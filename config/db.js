@@ -16,10 +16,10 @@ let sequelize;
 if (process.env.DATABASE_URL) {
   console.log('--- Database Setup ---');
   console.log('Connecting to SQL Database (Production Mode)');
-  
+
   const options = {
     dialect: 'postgres',
-    logging: false,
+    logging: false
   };
 
   // Enable SSL config for Heroku/Render/Supabase PostgreSQL
@@ -36,7 +36,7 @@ if (process.env.DATABASE_URL) {
 } else if (process.env.VERCEL) {
   console.log('--- Database Setup ---');
   console.log('Vercel environment detected but DATABASE_URL is missing. Using PostgreSQL placeholder connection.');
-  
+
   // Use postgres dialect placeholder to avoid sqlite3 compilation/load error on Vercel
   sequelize = new Sequelize('postgres://localhost:5432/placeholder', {
     dialect: 'postgres',
@@ -45,19 +45,21 @@ if (process.env.DATABASE_URL) {
 } else {
   console.log('--- Database Setup ---');
   console.log('Using Free, Portable SQLite Database (Local Mode)');
-  
+
   // Ensure the data directory exists locally
   const dbDir = path.join(__dirname, '../data');
   if (!fs.existsSync(dbDir)) {
     fs.mkdirSync(dbDir, { recursive: true });
   }
-  const dbPath = path.join(dbDir, 'database.sqlite');
+  const dbPath = process.env.SQLITE_DATABASE_PATH ||
+    process.env.SQLITE_STORAGE ||
+    path.join(dbDir, 'database.sqlite');
   console.log(`Database File: ${dbPath}`);
 
   sequelize = new Sequelize({
     dialect: 'sqlite',
     storage: dbPath,
-    logging: false,
+    logging: false
   });
 }
 
@@ -73,7 +75,7 @@ const connectDB = async () => {
   } catch (error) {
     console.error('Database connection failed:', error.message);
     console.log('----------------------');
-    if (process.env.VERCEL) {
+    if (process.env.VERCEL || process.env.NODE_ENV === 'test') {
       throw error;
     } else {
       process.exit(1);

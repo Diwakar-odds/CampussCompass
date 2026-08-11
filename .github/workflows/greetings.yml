@@ -1,48 +1,42 @@
 name: Greetings
 
 on:
+  pull_request_target:
+    types: [opened]
   issues:
     types: [opened]
 
-  pull_request_target:
-    types: [opened]
+permissions:
+  issues: write
+  pull-requests: write
 
 jobs:
-  greet-issue:
-    if: github.event_name == 'issues'
+  greeting:
     runs-on: ubuntu-latest
 
-    permissions:
-      issues: write
-
     steps:
-      - name: Welcome Issue Creator
-        uses: actions/github-script@v7
+      - name: Greet first-time contributors
+        uses: actions/first-interaction@v1
         with:
-          script: |
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: "👋 Thank you for opening an issue in CampusCompass!\n\nOur maintainers will review it soon.\n\nPlease ensure:\n- The issue is clearly described\n- Relevant screenshots/logs are attached\n- Existing issues have been checked for duplicates\n\nHappy contributing! 🚀"
-            });
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
 
-  greet-pr:
-    if: github.event_name == 'pull_request_target'
-    runs-on: ubuntu-latest
+          issue-message: |
+            👋 Welcome to **CampusCompass**!
 
-    permissions:
-      pull-requests: write
-      issues: write
+            Thank you for opening your first issue. We appreciate you taking the time to help improve the project.
 
-    steps:
-      - name: Welcome PR Contributor
-        uses: actions/github-script@v7
-        with:
-          script: |
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.payload.pull_request.number,
-              body: "🎉 Thank you for your contribution to CampusCompass!\n\nWe appreciate your effort in improving the project.\n\nBefore review, please ensure:\n- All checks are passing\n- Changes are tested\n- The PR is linked to an issue (if applicable)\n- The PR description is complete\n\nA maintainer will review your contribution shortly.\n\nHappy contributing! 🚀"
-            });
+            Please ensure you've provided enough details for us to reproduce or understand the issue. A maintainer will review it as soon as possible.
+
+            Happy Contributing! 🚀
+
+          pr-message: |
+            🎉 Welcome to **CampusCompass**!
+
+            Thank you for your first Pull Request! We're excited to have you contribute.
+
+            Please make sure:
+            - ✅ Your code follows the project's coding standards.
+            - ✅ All GitHub Actions checks pass.
+            - ✅ You've linked the relevant issue (if applicable).
+
+            A maintainer will review your PR soon. Thanks for contributing, and happy coding! 🚀

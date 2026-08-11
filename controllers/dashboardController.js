@@ -1,56 +1,5 @@
-const path = require('path');
-const fs = require('fs');
 const User = require('../models/User');
-
-// Map career goals to roadmap JSON files
-const ROADMAP_FILES = {
-  'Data Scientist': 'data-scientist.json',
-  'Software Engineer': 'software-engineer.json',
-  'Web Developer': 'web-developer.json',
-  'AI Engineer': 'ai-engineer.json',
-  'Cyber Security': 'cyber-security.json',
-  'Cloud Engineer': 'cloud-engineer.json'
-};
-
-// In-memory cache for roadmap JSON files to avoid disk I/O on every request
-const roadmapCache = {};
-
-// Pre-load all roadmaps into memory at startup
-const initializeRoadmapCache = async () => {
-  for (const [careerGoal, filename] of Object.entries(ROADMAP_FILES)) {
-    try {
-      const filePath = path.join(__dirname, '../data/roadmaps', filename);
-      const rawData = await fs.promises.readFile(filePath, 'utf8');
-      roadmapCache[careerGoal] = JSON.parse(rawData);
-    } catch (error) {
-      console.error(`Error pre-loading roadmap for ${careerGoal}:`, error);
-    }
-  }
-};
-
-// Initialize cache
-initializeRoadmapCache();
-
-// Helper function to read roadmap JSON data (returns from cache or fallback)
-const getRoadmapData = async (careerGoal) => {
-  if (roadmapCache[careerGoal]) {
-    return roadmapCache[careerGoal];
-  }
-  
-  const filename = ROADMAP_FILES[careerGoal];
-  if (!filename) return null;
-
-  try {
-    const filePath = path.join(__dirname, '../data/roadmaps', filename);
-    const rawData = await fs.promises.readFile(filePath, 'utf8');
-    const parsedData = JSON.parse(rawData);
-    roadmapCache[careerGoal] = parsedData;
-    return parsedData;
-  } catch (error) {
-    console.error(`Error loading roadmap for ${careerGoal}:`, error);
-  }
-  return null;
-};
+const { getRoadmapData } = require('../services/contentDataLoader');
 
 // Helper to calculate progress dynamically based on matching user skills to roadmap topics
 const calculateProgress = (userSkills, roadmap) => {
@@ -69,8 +18,8 @@ const calculateProgress = (userSkills, roadmap) => {
       const topicDescLower = topic.description.toLowerCase();
 
       // Check if any of user's skills are mentioned in the topic's name or description
-      const hasSkill = userSkillsLower.some(skill => 
-        topicNameLower.includes(skill) || 
+      const hasSkill = userSkillsLower.some(skill =>
+        topicNameLower.includes(skill) ||
         topicDescLower.includes(skill) ||
         skill.includes(topicNameLower)
       );
@@ -85,8 +34,8 @@ const calculateProgress = (userSkills, roadmap) => {
     });
   });
 
-  const percent = totalTopicsCount > 0 
-    ? Math.round((completedTopicsCount / totalTopicsCount) * 100) 
+  const percent = totalTopicsCount > 0
+    ? Math.round((completedTopicsCount / totalTopicsCount) * 100)
     : 0;
 
   return {
@@ -100,10 +49,9 @@ exports.getDashboard = async (req, res) => {
   try {
     // req.user is already populated by the ensureProfileComplete middleware
     const user = req.user;
-    
+
     // Load the matching roadmap
-    const roadmap = await getRoadmapData(user.profile.careerGoal);
-    
+    const roadmap = getRoadmapData(user.profile.careerGoal);
     // Calculate progress
     const progress = calculateProgress(user.profile.skills, roadmap);
 
@@ -126,7 +74,7 @@ exports.getDashboard = async (req, res) => {
 exports.getSocial = async (req, res) => {
   try {
     const user = req.user;
-    
+
     // Fetch all users with completed profiles
     const students = await User.findAll({
       where: {
@@ -139,18 +87,18 @@ exports.getSocial = async (req, res) => {
       const student = studentInstance.toJSON();
       // Create seed from username length or ID to keep values stable per render
       const seedVal = student._id ? (student._id.charCodeAt(student._id.length - 1) || 42) : 42;
-      
-      const githubRepos = student.profile.githubUsername 
+
+      const githubRepos = student.profile.githubUsername
         ? (seedVal % 40) + 12
         : 0;
-      const githubStars = student.profile.githubUsername 
+      const githubStars = student.profile.githubUsername
         ? Math.round((seedVal * 1.5) % 150)
         : 0;
-        
-      const leetcodeSolved = student.profile.leetcodeUsername 
+
+      const leetcodeSolved = student.profile.leetcodeUsername
         ? (seedVal * 4) % 400 + 45
         : 0;
-      const leetcodeRank = student.profile.leetcodeUsername 
+      const leetcodeRank = student.profile.leetcodeUsername
         ? Math.round(150000 + (seedVal * 2432) % 350000)
         : 0;
 
