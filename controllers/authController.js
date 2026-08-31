@@ -143,6 +143,11 @@ exports.postMockOAuth = async (req, res) => {
   const { platform } = req.params;
   const { username, oauthToken, password } = req.body;
 
+  if (platform !== 'github' && platform !== 'leetcode') {
+    req.session.error = 'Invalid authentication provider';
+    return res.redirect('/login');
+  }
+
   // Validate state token
   if (!oauthToken || oauthToken !== req.session.mockOAuthToken) {
     req.session.error = 'Invalid or expired authorization request. Please try again.';
@@ -168,7 +173,7 @@ exports.postMockOAuth = async (req, res) => {
       // If not, create a new user automatically
       user = new User({
         email: simulatedEmail,
-        password: 'mock_oauth_password_never_matches_plain' // safe hashed placeholder
+        password: require('crypto').randomBytes(24).toString('hex') // safe random placeholder instead of static string
       });
       
       // Auto populate social connection field
